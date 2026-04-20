@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chaotic OS</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;700;800&display=swap"
+        rel="stylesheet" />
+    <style>
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --black: #0a0a0a;
+            --white: #f0ede6;
+            --acid: #c8ff00;
+            --red: #ff2d2d;
+            --blue: #0044ff;
+            --gray: #1a1a1a;
+            --mid: #2e2e2e;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background: var(--black);
+            color: var(--white);
+            font-family: 'Space Mono', monospace;
+            overflow-x: hidden;
+            cursor: crosshair;
+        }
+
+        /* noise filter */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: 999;
+            opacity: 0.4;
+        }
+
+        /* grid bg */
+        .grid-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-image:
+                linear-gradient(rgba(200, 255, 0, 0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(200, 255, 0, 0.04) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* navbar */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.2rem 2rem;
+            border-bottom: 1px solid var(--mid);
+            background: rgba(10, 10, 10, 0.85);
+            backdrop-filter: blur(8px);
+        }
+
+        .nav-logo {
+            font-family: 'Syne', sans-serif;
+            font-weight: 800;
+            font-size: 1.1rem;
+            letter-spacing: -0.02em;
+            color: var(--acid);
+        }
+
+        .nav-logo span {
+            color: var(--white);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--white);
+            text-decoration: none;
+            font-size: 0.72rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            opacity: 0.6;
+            transition: opacity 0.2s, color 0.2s;
+        }
+
+        .nav-links a:hover {
+            opacity: 1;
+            color: var(--acid);
+        }
+
+        .nav-tag {
+            font-size: 0.65rem;
+            padding: 4px 10px;
+            border: 1px solid var(--acid);
+            color: var(--acid);
+            letter-spacing: 0.1em;
+        }
+
+        /* hero section */
+        .hero {
+            position: relative;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            padding: 8rem 2rem 4rem;
+            z-index: 1;
+        }
+
+        .hero-inner {
+            max-width: 1100px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .hero-eyebrow {
+            font-size: 0.7rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--acid);
+            margin-bottom: 1.5rem;
+            opacity: 0;
+            animation: fadeUp 0.6s 0.2s forwards;
+        }
+
+        .hero-title {
+            font-family: 'Syne', sans-serif;
+            font-weight: 800;
+            font-size: clamp(3.5rem, 10vw, 9rem);
+            line-height: 0.92;
+            letter-spacing: -0.04em;
+            margin-bottom: 2rem;
+            opacity: 0;
+            animation: fadeUp 0.7s 0.35s forwards;
+        }
+
+        .hero-title .line-chaos {
+            display: block;
+            color: var(--white);
+        }
+
+        .hero-title .line-os {
+            display: block;
+            color: transparent;
+            -webkit-text-stroke: 2px var(--acid);
+        }
+
+        .hero-title .line-os .glitch {
+            position: relative;
+            display: inline-block;
+            animation: glitch 4s infinite;
+        }
+
+        .hero-sub {
+            max-width: 520px;
+            font-size: 0.9rem;
+            line-height: 1.8;
+            color: rgba(240, 237, 230, 0.55);
+            margin-bottom: 3rem;
+            opacity: 0;
+            animation: fadeUp 0.7s 0.5s forwards;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            opacity: 0;
+            animation: fadeUp 0.7s 0.65s forwards;
+        }
+
+        .btn-primary {
+            background: var(--acid);
+            color: var(--black);
+            padding: 14px 32px;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            text-decoration: none;
+            border: none;
+            cursor: crosshair;
+            transition: transform 0.15s, background 0.2s;
+            display: inline-block;
+        }
+
+        .btn-primary:hover {
+            background: var(--white);
+            transform: translate(-3px, -3px);
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--white);
+            padding: 13px 32px;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.75rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            text-decoration: none;
+            border: 1px solid var(--mid);
+            cursor: crosshair;
+            transition: border-color 0.2s, color 0.2s;
+            display: inline-block;
+        }
+
+        .btn-ghost:hover {
+            border-color: var(--white);
+        }
+
+        /* floating text elements */
+        .float-el {
+            position: absolute;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.65rem;
+            color: rgba(200, 255, 0, 0.25);
+            letter-spacing: 0.05em;
+            pointer-events: none;
+            animation: drift linear infinite;
+        }
+
+        .fe1 {
+            top: 15%;
+            right: 8%;
+            animation-duration: 14s;
+            animation-delay: 0s;
+        }
+
+        .fe2 {
+            top: 60%;
+            right: 15%;
+            animation-duration: 18s;
+            animation-delay: -5s;
+        }
+
+        .fe3 {
+            top: 30%;
+            right: 30%;
+            animation-duration: 22s;
+            animation-delay: -9s;
+            font-size: 0.55rem;
+            opacity: 0.5;
+        }
+
+        .fe4 {
+            bottom: 20%;
+            left: 5%;
+            animation-duration: 16s;
+            animation-delay: -3s;
+        }
+
+        /* laws section */
+        .laws {
+            position: relative;
+            z-index: 1;
+            padding: 6rem 2rem;
+            border-top: 1px solid var(--mid);
+        }
+
+        .section-label {
+            font-size: 0.65rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--acid);
+            margin-bottom: 3rem;
+        }
+
+        .laws-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 1px;
+            background: var(--mid);
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .law-card {
+            background: var(--black);
+            padding: 2.5rem 2rem;
+            transition: background 0.2s;
+            /* border: 1px solid red; test border */
+            position: relative;
+            overflow: hidden;
+        }
+
+        .law-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 3px;
+            height: 0;
+            background: var(--acid);
+            transition: height 0.3s ease;
+        }
+
+        .law-card:hover::before {
+            height: 100%;
+        }
+
+        .law-card:hover {
+            background: var(--gray);
+        }
+
+        .law-num {
+            font-size: 0.6rem;
+            letter-spacing: 0.15em;
+            color: var(--acid);
+            margin-bottom: 1rem;
+            opacity: 0.7;
+        }
+
+        .law-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin-bottom: 0.75rem;
+            line-height: 1.2;
+        }
+
+        .law-desc {
+            font-size: 0.78rem;
+            line-height: 1.8;
+            color: rgba(240, 237, 230, 0.45);
+        }
+
+        /* terminal block */
+        .terminal-section {
+            position: relative;
+            z-index: 1;
+            padding: 4rem 2rem 6rem;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .terminal {
+            background: var(--gray);
+            border: 1px solid var(--mid);
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .terminal-bar {
+            background: var(--mid);
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .dot-r {
+            background: var(--red);
+        }
+
+        .dot-y {
+            background: #ffaa00;
+        }
+
+        .dot-g {
+            background: #00cc55;
+        }
+
+        .terminal-title {
+            font-size: 0.65rem;
+            color: rgba(240, 237, 230, 0.35);
+            margin-left: auto;
+            letter-spacing: 0.1em;
+        }
+
+        .terminal-body {
+            padding: 1.5rem 2rem;
+            font-size: 0.8rem;
+            line-height: 2;
+        }
+
+        .t-comment {
+            color: rgba(200, 255, 0, 0.4);
+        }
+
+        .t-cmd {
+            color: var(--acid);
+        }
+
+        .t-out {
+            color: rgba(240, 237, 230, 0.6);
+        }
+
+        .t-err {
+            color: var(--red);
+        }
+
+        .t-cursor {
+            display: inline-block;
+            width: 8px;
+            height: 14px;
+            background: var(--acid);
+            vertical-align: middle;
+            animation: blink 1s step-end infinite;
+        }
+
+        /* footer styles */
+        footer {
+            position: relative;
+            z-index: 1;
+            border-top: 1px solid var(--mid);
+            padding: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .footer-logo {
+            font-family: 'Syne', sans-serif;
+            font-weight: 800;
+            font-size: 0.9rem;
+            color: var(--acid);
+            letter-spacing: -0.02em;
+        }
+
+        .footer-note {
+            font-size: 0.65rem;
+            color: rgba(240, 237, 230, 0.3);
+            letter-spacing: 0.05em;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        .footer-links a {
+            font-size: 0.65rem;
+            color: rgba(240, 237, 230, 0.4);
+            text-decoration: none;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            transition: color 0.2s;
+        }
+
+        .footer-links a:hover {
+            color: var(--acid);
+        }
+
+        /* animations */
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(24px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes glitch {
+
+            0%,
+            90%,
+            100% {
+                transform: none;
+                text-shadow: none;
+            }
+
+            91% {
+                transform: skewX(-8deg);
+                text-shadow: 3px 0 var(--red);
+            }
+
+            93% {
+                transform: skewX(4deg);
+                text-shadow: -3px 0 var(--blue);
+            }
+
+            95% {
+                transform: none;
+            }
+        }
+
+        @keyframes drift {
+            0% {
+                transform: translateY(0px) rotate(0deg);
+            }
+
+            50% {
+                transform: translateY(-20px) rotate(2deg);
+            }
+
+            100% {
+                transform: translateY(0px) rotate(0deg);
+            }
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0;
+            }
+        }
+
+        /* mobile view */
+        @media (max-width: 600px) {
+            nav {
+                padding: 1rem;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .hero {
+                padding: 7rem 1.25rem 3rem;
+            }
+
+            .laws {
+                padding: 4rem 1.25rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- floating words -->
+    <div class="float-el fe1">gravity=-9.8<br> // wait, what?</div>
+    <div class="float-el fe2">friction: -1.0<br>walls.repel(true)</div>
+    <div class="float-el fe3">time.reverse()<br> // still works</div>
+    <div class="float-el fe4">mass=undefined<br> // that's fine</div>
+
+    <!-- main nav -->
+    <nav>
+        <div class="nav-logo">Chaotic<span>OS</span></div>
+        <ul class="nav-links">
+            <li><a href="#laws">Laws</a></li>
+            <li><a href="#play">Puzzles</a></li>
+            <li><a href="labsofgames.html">Play Labs</a></li>
+        </ul>
+        <div class="nav-tag">v0.1.0-alpha</div>
+    </nav>
+
+    <!-- hero area -->
+    <section class="hero">
+        <div class="hero-inner">
+            <p class="hero-eyebrow"> // an anti-physics sandbox</p>
+            <h1 class="hero-title"><span class="line-chaos">Chaotic</span><span class="line-os"><span
+                        class="glitch">OS</span></span></h1>
+            <p class="hero-sub">A playground where the laws of physics don't apply.
+                Gravity is optional. Friction is a suggestion. Walls push back. Solve puzzles in a universe that refuses
+                to behave. </p>
+            <div class="hero-actions">
+                <a href="#play" class="btn-primary">Enter the chaos</a>
+                <a href="labsofgames.html" class="btn-ghost">Open Play Labs</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- laws cards -->
+    <section class="laws" id="laws">
+        <div style="max-width:1100px;margin:0 auto;">
+            <p class="section-label"> // the anti-laws of chaotic os</p>
+            <div class="laws-grid">
+                <div class="law-card">
+                    <p class="law-num">LAW_001</p>
+                    <h3 class="law-title">Inverse Gravity</h3>
+                    <p class="law-desc">Objects fall upward. The ceiling is your floor. Orientation is a matter of
+                        perspective.</p>
+                </div>
+                <div class="law-card">
+                    <p class="law-num">LAW_002</p>
+                    <h3 class="law-title">Sticky Void</h3>
+                    <p class="law-desc">Empty space has friction. The more nothing there is,
+                        the harder it is to move through.</p>
+                </div>
+                <div class="law-card">
+                    <p class="law-num">LAW_003</p>
+                    <h3 class="law-title">Repulsive Walls</h3>
+                    <p class="law-desc">Surfaces push back. Collisions accelerate instead of stop. Boundaries are a
+                        launchpad.</p>
+                </div>
+                <div class="law-card">
+                    <p class="law-num">LAW_004</p>
+                    <h3 class="law-title">Time Drift</h3>
+                    <p class="law-desc">Time moves at different speeds in different zones. Step left,
+                        age fast. Step right,
+                        rewind.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- terminal -->
+    <section class="terminal-section" id="play">
+        <p class="section-label"> // boot sequence</p>
+        <div class="terminal">
+            <div class="terminal-bar">
+                <div class="dot dot-r"></div>
+                <div class="dot dot-y"></div>
+                <div class="dot dot-g"></div><span class="terminal-title">chaotic-os — bash</span>
+            </div>
+            <div class="terminal-body">
+                <p class="t-comment"># initializing chaotic environment...</p>
+                <p><span class="t-cmd">$</span><span class="t-out">load physics.engine</span></p>
+                <p class="t-err">WARNING: standard physics rejected by system</p>
+                <p><span class="t-cmd">$</span><span class="t-out">load chaos.engine</span></p>
+                <p class="t-out">✓ gravity inverted</p>
+                <p class="t-out">✓ friction coefficient set to -1.0</p>
+                <p class="t-out">✓ time drift enabled in zones [2,
+                    5,
+                    8]</p>
+                <p class="t-out">✓ walls configured to repel</p>
+                <p><span class="t-cmd">$</span><span class="t-out">start puzzle --level=1</span></p>
+                <p class="t-out">Loading "The Floor is Up" ...</p>
+                <p><span class="t-cmd">$</span><span class="t-cursor"></span></p>
+            </div>
+        </div>
+    </section>
+
+    <!-- footer -->
+    <footer>
+        <div class="footer-logo">ChaoticOS</div>
+        <div class="footer-links"><a href="#">Docs</a><a href="#">Puzzles</a></div>
+        <p class="footer-note">built for chaos. not for judges.</p>
+    </footer>
+</body>
+
+</html>
